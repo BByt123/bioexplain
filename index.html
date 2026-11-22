@@ -216,7 +216,7 @@
           </div>
           <div class="explanation">
             <h2>Light excites electrons</h2>
-            <p>When chlorophyll absorbs a photon, an electron briefly moves to a higher energy state. In a photosystem, an energized electron can then pass to an acceptor. Electron transport helps the chloroplast make ATP and NADPH.</p>
+            <p>When chlorophyll absorbs a photon, an electron briefly moves to a higher energy state. In a photosystem, an energized electron can then pass to an acceptor. Electron transport helps the chloroplast make adenosine triphosphate (ATP) and reduced nicotinamide adenine dinucleotide phosphate (NADPH).</p>
           </div>
         </div>
         <div class="experiment-grid wrap" id="heat-panel">
@@ -238,7 +238,7 @@
           </div>
           <div class="explanation">
             <h2>Heat changes enzyme activity</h2>
-            <p>In the stroma, enzymes such as Rubisco help the Calvin cycle fix CO<sub>2</sub>. Warming can speed these reactions up to an optimum. Above it, activity falls. Extreme heat can alter an enzyme's shape and reduce its ability to work.</p>
+            <p>In the stroma, enzymes help the Calvin cycle fix CO<sub>2</sub>. Warming can speed these reactions up to an optimum. Above it, activity falls. Extreme heat can alter an enzyme's shape and reduce its ability to work.</p>
           </div>
         </div>
       </div>
@@ -307,9 +307,9 @@
       for (const button of modeButtons) button.setAttribute('aria-pressed', String(button.dataset.mode === mode));
       byId('light-panel').hidden = heat;
       byId('heat-panel').hidden = !heat;
-      byId('legend-first').textContent = heat ? 'Rubisco' : 'Photon';
+      byId('legend-first').textContent = heat ? 'Enzyme' : 'Photon';
       byId('legend-second').textContent = heat ? 'CO₂' : 'Electron';
-      byId('focus-label').textContent = heat ? 'Rubisco' : 'Chlorophyll';
+      byId('focus-label').textContent = heat ? 'Enzyme' : 'Chlorophyll';
       byId('structure-label').textContent = heat ? 'Stroma' : 'Thylakoid stack';
       model?.restart();
     }
@@ -556,7 +556,7 @@
           capture.getPoint(Math.min(binding, 1 - heatStress * .30), carbonDioxide.position);
           carbonDioxide.rotation.z = -binding * 1.2;
         } else {
-          const period = 2 + 260 / Math.max(1, state.light + 8);
+          const period = 1 + 130 / (state.light + 8);
           const phase = elapsed % period;
           const arrivalTime = 1.1;
           const excitedTime = 1.54;
@@ -602,7 +602,7 @@
         lastFrame = now;
         if (!state.paused && inView && !document.hidden && !contextLost) {
           elapsed += seconds;
-          if (state.mode === 'heat') heatPhase = (heatPhase + seconds * (.07 + .67 * activityAt(state.heat))) % 1;
+          if (state.mode === 'heat') heatPhase = (heatPhase + seconds * 2 * (.07 + .67 * activityAt(state.heat))) % 1;
           render();
         }
         schedule();
