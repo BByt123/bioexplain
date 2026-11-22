@@ -1,0 +1,663 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Explore how light excites chlorophyll electrons and how temperature changes enzyme activity in an interactive 3D chloroplast.">
+  <meta name="theme-color" content="#12231c">
+  <title>Light &amp; Heat in Photosynthesis | Plant Lab</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f7f7ee;
+      --ink: #172820;
+      --secondary: #47594f;
+      --line: #cfd8cb;
+      --deep: #12231c;
+      --pale: #cee0d2;
+      --gold: #f9d87b;
+      --warm: #ffc29d;
+      --green: #245a42;
+      --wrap: 1180px;
+      --gutter: 32px;
+      font: 16px/1.55 "Segoe UI", system-ui, sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: var(--paper); color: var(--ink); }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    a { color: inherit; text-underline-offset: .24em; }
+    a:hover { text-decoration-thickness: 2px; }
+    :focus-visible { outline: 3px solid #2173a4; outline-offset: 4px; }
+    [hidden] { display: none !important; }
+    ::selection { background: #c0e1b1; color: var(--ink); }
+    .wrap { width: min(var(--wrap), calc(100% - var(--gutter) * 2)); margin-inline: auto; }
+    .site-header .wrap { min-height: 64px; display: flex; justify-content: space-between; align-items: center; gap: 16px; border-bottom: 1px solid var(--line); }
+    .brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 750; white-space: nowrap; text-decoration: none; }
+    .brand-mark { width: 23px; height: 14px; border: 1px solid var(--green); border-radius: 100% 0 100% 0; border-right-width: 2px; transform: rotate(-18deg); position: relative; }
+    .brand-mark::after { content: ""; position: absolute; inset: 6px 3px auto; border-top: 1px solid var(--green); transform: rotate(-25deg); }
+    .site-nav { display: flex; gap: 27px; font-size: .875rem; font-weight: 650; }
+    .site-nav a { text-decoration: none; }
+    .site-nav a:hover { text-decoration: underline; }
+    .page-heading { display: grid; grid-template-columns: 1.65fr 1fr; gap: 32px; align-items: end; padding-block: 28px 32px; }
+    h1, h2, h3, p { margin: 0; }
+    h1, h2, h3 { font-family: "Baskerville Old Face", Baskerville, Georgia, serif; font-weight: 400; line-height: 1.05; }
+    h1 { font-size: 3.875rem; }
+    .page-heading p { max-width: 34ch; color: var(--secondary); margin-block-end: 3px; }
+    .stage { position: relative; isolation: isolate; height: 438px; background: var(--deep); color: #f4f8ef; --signal: var(--gold); }
+    .stage[data-mode="heat"] { --signal: var(--warm); }
+    .stage :focus-visible { outline-color: var(--signal); }
+    .canvas-host, .canvas-host canvas, .stage-overlay { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .canvas-host canvas { display: block; }
+    .canvas-host[data-ready="true"] canvas { cursor: grab; touch-action: pan-y; }
+    .canvas-host[data-ready="true"] canvas:active { cursor: grabbing; }
+    .stage-overlay { pointer-events: none; }
+    .stage-inner { height: 100%; position: relative; display: flex; flex-direction: column; justify-content: space-between; padding-block: 23px 20px; }
+    .stage-header, .stage-footer { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .stage-header { align-items: flex-start; }
+    .mode-switch { display: inline-flex; border: 1px solid #729080; background: var(--deep); padding: 3px; border-radius: 5px; pointer-events: auto; }
+    .mode-switch button { border: 0; border-radius: 3px; min-height: 39px; background: transparent; padding: 8px 15px; color: #edf6ed; font-size: .875rem; font-weight: 650; white-space: nowrap; }
+    .mode-switch button:hover { background: #294136; }
+    .mode-switch [aria-pressed="true"] { background: #e1ecda; color: var(--ink); }
+    .specimen { color: var(--pale); font-size: .8125rem; text-align: right; }
+    .specimen strong { font-weight: 650; color: #f4f8ef; display: block; font-size: .9375rem; }
+    .legend { display: flex; gap: 14px; flex-wrap: wrap; color: var(--pale); font-size: .8125rem; }
+    .legend span { display: inline-flex; align-items: center; gap: 7px; }
+    .legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--signal); }
+    .legend span:nth-child(2) i { background: #a5ead2; }
+    .view-tools { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; pointer-events: auto; }
+    .view-tools button { width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid #729080; color: #edf6ed; border-radius: 4px; background: var(--deep); }
+    .view-tools button:hover { background: #294136; }
+    .view-tools svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.65; stroke-linecap: round; stroke-linejoin: round; }
+    .scene-status { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); max-width: min(32ch, 78%); color: var(--pale); text-align: center; font-size: .875rem; }
+    .diagram-label { position: absolute; font-size: .8125rem; font-weight: 650; line-height: 1.1; color: #f5faf2; border: 1px solid #5c7969; border-radius: 3px; padding: 6px 9px; background: var(--deep); white-space: nowrap; }
+    .diagram-label::before { content: ""; position: absolute; top: 50%; right: 100%; width: var(--leader, 24px); border-top: 1px solid currentColor; opacity: .75; }
+    .diagram-label.on-left::before { left: 100%; right: auto; }
+    .diagram-label.focus-label { color: var(--signal); border-color: currentColor; }
+    .experiment { border-bottom: 1px solid var(--line); }
+    .experiment-grid { display: grid; grid-template-columns: 1fr 1.12fr; gap: 52px; padding-block: 28px 35px; }
+    .settings { display: grid; align-content: start; gap: 12px; }
+    .reading { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+    .reading label { font-size: 1.0625rem; font-weight: 700; }
+    .reading output { color: var(--green); font-size: 1.1875rem; font-weight: 750; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .range-block input { display: block; width: 100%; height: 32px; margin: 0; accent-color: var(--green); cursor: pointer; }
+    .range-scale { display: flex; justify-content: space-between; gap: 8px; color: var(--secondary); font-size: .8125rem; }
+    .status-line { font-size: .875rem; color: var(--secondary); }
+    .status-line strong { color: var(--ink); }
+    .explanation { border-left: 1px solid var(--line); padding-inline-start: 32px; }
+    .explanation h2 { font-size: 2rem; margin-bottom: 9px; }
+    .explanation p { color: var(--secondary); max-width: 57ch; }
+    .activity-plot { position: relative; display: block; width: 100%; height: 69px; color: var(--green); }
+    .activity-plot .axis { stroke: #7a9080; stroke-width: 1; }
+    .activity-plot .curve { fill: none; stroke: currentColor; stroke-width: 2.5; }
+    .activity-plot .guide { stroke: #7a9080; stroke-width: 1; stroke-dasharray: 3 4; }
+    .activity-plot .marker { fill: var(--paper); stroke: currentColor; stroke-width: 2.5; }
+    .compare { display: grid; grid-template-columns: .75fr 1.4fr; gap: 45px; padding-block: 63px 72px; }
+    .compare h2 { font-size: 2.875rem; }
+    .compare-heading p { max-width: 26ch; color: var(--secondary); margin-top: 12px; }
+    .comparison-list { margin: 0; }
+    .comparison-list > div { display: grid; grid-template-columns: 9.5rem 1fr; gap: 16px; padding-block: 14px; border-top: 1px solid var(--line); }
+    .comparison-list > div:last-child { border-bottom: 1px solid var(--line); }
+    .comparison-list dt { font-weight: 750; }
+    .comparison-list dd { margin: 0; color: var(--secondary); }
+    .site-footer { background: #e7ece0; }
+    .site-footer .wrap { display: flex; justify-content: space-between; gap: 16px; align-items: center; padding-block: 20px; font-size: .875rem; }
+    .site-footer a { font-weight: 650; }
+    .icon-library { position: absolute; width: 0; height: 0; overflow: hidden; }
+    @media (max-width: 900px) {
+      h1 { font-size: 3.125rem; }
+      .page-heading { gap: 18px; }
+      .stage { height: 400px; }
+      .experiment-grid { gap: 26px; }
+      .explanation { padding-inline-start: 24px; }
+    }
+    @media (max-width: 640px) {
+      :root { --gutter: 18px; }
+      .site-header .wrap { min-height: 54px; }
+      .site-nav { gap: 17px; }
+      .page-heading { grid-template-columns: 1fr; gap: 9px; padding-block: 22px 23px; }
+      h1 { font-size: 2.625rem; }
+      .page-heading p { max-width: 40ch; }
+      .stage { height: 350px; }
+      .stage-inner { padding-block: 13px; }
+      .specimen { display: none; }
+      .stage-footer { align-items: flex-end; }
+      .legend { gap: 3px 12px; font-size: .75rem; }
+      .view-tools { flex-wrap: nowrap; }
+      .view-tools button { width: 38px; height: 38px; }
+      .diagram-label { font-size: .75rem; padding: 5px 6px; }
+      .experiment-grid, .compare { grid-template-columns: 1fr; }
+      .experiment-grid { padding-block: 22px 26px; gap: 19px; }
+      .explanation { border-left: 0; border-top: 1px solid var(--line); padding: 16px 0 0; }
+      .explanation h2 { font-size: 1.75rem; }
+      .compare { gap: 23px; padding-block: 34px 43px; }
+      .compare h2 { font-size: 2.45rem; }
+      .comparison-list > div { grid-template-columns: 1fr; gap: 3px; }
+    }
+    @media (max-width: 360px) {
+      h1 { font-size: 2.25rem; }
+      .view-tools button { width: 33px; }
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  </style>
+</head>
+<body>
+  <!-- Control icons by Lucide Contributors, licensed under the ISC license.
+       Permission to use, copy, modify, and/or distribute this software for any
+       purpose with or without fee is hereby granted, provided that the above
+       copyright notice and this permission notice appear in all copies.
+       THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+       WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+       MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+       ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+       WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+       ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+       OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. -->
+  <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="icon-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+    <symbol id="icon-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+    <symbol id="icon-pause" viewBox="0 0 24 24"><rect x="14" y="4" width="4" height="16" rx="1"/><rect x="6" y="4" width="4" height="16" rx="1"/></symbol>
+    <symbol id="icon-play" viewBox="0 0 24 24"><path d="M5 5a1 1 0 0 1 1.555-.832l14 7a1 1 0 0 1 0 1.664l-14 7A1 1 0 0 1 5 19z"/></symbol>
+    <symbol id="icon-reset" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 1 9 9 9.75 9.75 0 0 1-6.74-2.74L3 15"/><path d="M3 21v-6h6"/></symbol>
+  </svg>
+  <header class="site-header" id="top">
+    <div class="wrap">
+      <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true"></span>Plant Lab</a>
+      <nav class="site-nav" aria-label="Main">
+        <a href="#lab">3D lab</a><a href="#compare">Compare</a>
+      </nav>
+    </div>
+  </header>
+  <main>
+    <header class="page-heading wrap">
+      <h1>Light &amp; heat in<br>photosynthesis</h1>
+      <p>Light excites electrons in chlorophyll. Temperature changes how quickly enzymes work. Explore both inside a chloroplast.</p>
+    </header>
+    <section id="lab" aria-label="3D chloroplast lab">
+      <div class="stage" id="stage" data-mode="light">
+        <div class="canvas-host" id="canvas-host" aria-hidden="true"></div>
+        <p class="scene-status" id="scene-status" role="status">Loading the 3D chloroplast&hellip;</p>
+        <div class="stage-overlay" aria-hidden="true">
+          <span class="diagram-label focus-label" id="focus-label" hidden>Chlorophyll</span>
+          <span class="diagram-label" id="structure-label" hidden>Thylakoid stack</span>
+        </div>
+        <div class="stage-overlay">
+          <div class="stage-inner wrap">
+            <div class="stage-header">
+              <div class="mode-switch" id="mode-switch" role="group" aria-label="Energy to explore" hidden>
+                <button type="button" data-mode="light" aria-pressed="true" aria-controls="light-panel">Light energy</button>
+                <button type="button" data-mode="heat" aria-pressed="false" aria-controls="heat-panel">Heat &amp; enzymes</button>
+              </div>
+              <div class="specimen"><strong>Chloroplast cutaway</strong>Schematic, not to scale</div>
+            </div>
+            <div class="stage-footer">
+              <div class="legend" id="legend" hidden><span><i aria-hidden="true"></i><b id="legend-first">Photon</b></span><span><i aria-hidden="true"></i><b id="legend-second">Electron</b></span></div>
+              <div class="view-tools" id="view-tools" role="group" aria-label="3D view controls" hidden>
+                <button type="button" id="rotate-left" aria-label="Rotate left" title="Rotate left"><svg aria-hidden="true"><use href="#icon-left"/></svg></button>
+                <button type="button" id="rotate-right" aria-label="Rotate right" title="Rotate right"><svg aria-hidden="true"><use href="#icon-right"/></svg></button>
+                <button type="button" id="motion-button" aria-label="Pause animation" title="Pause animation"><svg aria-hidden="true"><use href="#icon-pause"/></svg></button>
+                <button type="button" id="reset-view" aria-label="Reset view" title="Reset view"><svg aria-hidden="true"><use href="#icon-reset"/></svg></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <noscript><style>.stage { display: none; }</style></noscript>
+      <div class="experiment">
+        <div class="experiment-grid wrap" id="light-panel">
+          <div class="settings" id="light-settings" hidden>
+            <div class="reading"><label for="light-input">Light intensity</label><output id="light-value" for="light-input">65%</output></div>
+            <div class="range-block">
+              <input type="range" id="light-input" min="0" max="100" value="65" aria-describedby="light-description">
+              <div class="range-scale" aria-hidden="true"><span>Dark</span><span>Bright</span></div>
+            </div>
+            <p class="status-line" id="light-description"><strong id="light-status">Frequent photon arrivals.</strong> Each photon in this model has the same energy.</p>
+          </div>
+          <div class="explanation">
+            <h2>Light excites electrons</h2>
+            <p>When chlorophyll absorbs a photon, an electron briefly moves to a higher energy state. In a photosystem, an energized electron can then pass to an acceptor. Electron transport helps the chloroplast make ATP and NADPH.</p>
+          </div>
+        </div>
+        <div class="experiment-grid wrap" id="heat-panel">
+          <div class="settings" id="heat-settings" hidden>
+            <div class="reading"><label for="heat-input">Temperature</label><output id="heat-value" for="heat-input">25 &deg;C</output></div>
+            <div class="range-block">
+              <input type="range" id="heat-input" min="5" max="55" value="25" aria-describedby="heat-description">
+              <div class="range-scale" aria-hidden="true"><span>5 &deg;C</span><span>55 &deg;C</span></div>
+            </div>
+            <p class="status-line" id="heat-description"><strong id="heat-status">Activity rising.</strong> This example peaks at 30 &deg;C. The optimum varies.</p>
+            <svg class="activity-plot" id="activity-plot" viewBox="0 0 300 69" role="img" aria-label="Illustrative enzyme activity rises to a peak at 30 degrees Celsius and then declines.">
+              <path class="axis" d="M18 7v47h264" fill="none"/>
+              <path class="guide" d="M150 7v47"/>
+              <path class="curve" id="activity-curve" d="M18 53 Q95 52 150 9 Q179 10 216 47 Q249 53 282 54"/>
+              <circle class="marker" id="activity-marker" cx="124" cy="22" r="4.5"/>
+              <text x="150" y="67" text-anchor="middle" fill="currentColor" font-size="10">30 &deg;C</text>
+              <text x="24" y="12" fill="currentColor" font-size="10">Relative enzyme activity</text>
+            </svg>
+          </div>
+          <div class="explanation">
+            <h2>Heat changes enzyme activity</h2>
+            <p>In the stroma, enzymes such as Rubisco help the Calvin cycle fix CO<sub>2</sub>. Warming can speed these reactions up to an optimum. Above it, activity falls. Extreme heat can alter an enzyme's shape and reduce its ability to work.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="compare wrap" id="compare" aria-labelledby="compare-title">
+      <div class="compare-heading">
+        <h2 id="compare-title">Two different jobs</h2>
+        <p>What changes when you turn up the light or raise the temperature?</p>
+      </div>
+      <dl class="comparison-list">
+        <div><dt>More light</dt><dd>At the same wavelength, brighter light means more photons arrive each second. In darkness, chlorophyll stops absorbing light energy.</dd></div>
+        <div><dt>More warmth</dt><dd>Molecules move faster as temperature rises. Enzyme activity can increase up to an optimum and then decline. Warming alone cannot sustain photosynthesis in darkness.</dd></div>
+        <div><dt>How they connect</dt><dd>Light-dependent reactions in the thylakoid membrane supply ATP and NADPH. The Calvin cycle uses them to turn carbon dioxide into compounds the plant can use to make sugars.</dd></div>
+      </dl>
+    </section>
+  </main>
+  <footer class="site-footer"><div class="wrap"><span>Plant Lab</span><a href="https://openstax.org/books/biology-2e/pages/8-introduction">Photosynthesis in OpenStax Biology</a></div></footer>
+
+  <script type="module">
+    const byId = (id) => document.getElementById(id);
+    const stage = byId('stage');
+    const host = byId('canvas-host');
+    const sceneStatus = byId('scene-status');
+    const modeSwitch = byId('mode-switch');
+    const modeButtons = [...modeSwitch.querySelectorAll('button')];
+    const lightInput = byId('light-input');
+    const heatInput = byId('heat-input');
+    const motionButton = byId('motion-button');
+    const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+    const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+    const state = { mode: 'light', light: +lightInput.value, heat: +heatInput.value, paused: reducedMotion.matches };
+    let model;
+
+    // A qualitative temperature response with a steeper decline above the example optimum.
+    function activityAt(temperature) {
+      const width = temperature < 30 ? 12 : 7.5;
+      return Math.exp(-.5 * ((temperature - 30) / width) ** 2);
+    }
+
+    const plotX = (temperature) => 18 + (temperature - 5) * 264 / 50;
+    const plotY = (temperature) => 54 - 43 * activityAt(temperature);
+    const curve = Array.from({ length: 51 }, (_, i) => {
+      const temperature = i + 5;
+      return `${i === 0 ? 'M' : 'L'}${plotX(temperature).toFixed(2)} ${plotY(temperature).toFixed(2)}`;
+    });
+    byId('activity-curve').setAttribute('d', curve.join(' '));
+
+    function updateReadings() {
+      const { heat, light } = state;
+      byId('light-value').value = `${light}%`;
+      lightInput.setAttribute('aria-valuetext', `${light} percent light intensity`);
+      byId('light-status').textContent = !light ? 'No photons arrive.' : light < 40 ? 'Occasional photon arrivals.' : 'Frequent photon arrivals.';
+      byId('heat-value').value = `${heat} °C`;
+      heatInput.setAttribute('aria-valuetext', `${heat} degrees Celsius`);
+      const heatStatus = heat === 30 ? 'Peak activity.' : heat < 18 ? 'Low activity.' : heat < 30 ? 'Activity rising.' : heat <= 43 ? 'Activity falling.' : 'Very low activity.';
+      byId('heat-status').textContent = heatStatus;
+      byId('activity-marker').setAttribute('cx', plotX(heat));
+      byId('activity-marker').setAttribute('cy', plotY(heat));
+      model?.render();
+    }
+
+    function selectMode(mode) {
+      const heat = mode === 'heat';
+      state.mode = mode;
+      stage.dataset.mode = mode;
+      for (const button of modeButtons) button.setAttribute('aria-pressed', String(button.dataset.mode === mode));
+      byId('light-panel').hidden = heat;
+      byId('heat-panel').hidden = !heat;
+      byId('legend-first').textContent = heat ? 'Rubisco' : 'Photon';
+      byId('legend-second').textContent = heat ? 'CO₂' : 'Electron';
+      byId('focus-label').textContent = heat ? 'Rubisco' : 'Chlorophyll';
+      byId('structure-label').textContent = heat ? 'Stroma' : 'Thylakoid stack';
+      model?.restart();
+    }
+
+    function setPaused(paused) {
+      state.paused = paused;
+      const label = paused ? 'Play animation' : 'Pause animation';
+      motionButton.setAttribute('aria-label', label);
+      motionButton.title = label;
+      motionButton.querySelector('use').setAttribute('href', paused ? '#icon-play' : '#icon-pause');
+      model?.syncMotion();
+    }
+
+    for (const button of modeButtons) button.addEventListener('click', () => selectMode(button.dataset.mode));
+    lightInput.addEventListener('input', () => { state.light = +lightInput.value; updateReadings(); });
+    heatInput.addEventListener('input', () => { state.heat = +heatInput.value; updateReadings(); });
+    motionButton.addEventListener('click', () => setPaused(!state.paused));
+    reducedMotion.addEventListener('change', (event) => setPaused(event.matches));
+    byId('rotate-left').addEventListener('click', () => model?.rotate(-.32));
+    byId('rotate-right').addEventListener('click', () => model?.rotate(.32));
+    byId('reset-view').addEventListener('click', () => model?.resetView());
+    modeSwitch.hidden = false;
+    byId('light-settings').hidden = false;
+    byId('heat-settings').hidden = false;
+    selectMode('light');
+    setPaused(state.paused);
+    updateReadings();
+
+    function showModelUnavailable() {
+      sceneStatus.textContent = 'The 3D chloroplast couldn’t load. The experiment controls and explanations are available below.';
+      sceneStatus.hidden = false;
+      byId('legend').hidden = true;
+      byId('view-tools').hidden = true;
+      byId('focus-label').hidden = true;
+      byId('structure-label').hidden = true;
+    }
+
+    let loadTimeout;
+    try {
+      const THREE = await Promise.race([
+        import('https://cdn.jsdelivr.net/npm/three@0.173.0/build/three.module.min.js'),
+        new Promise((_, reject) => { loadTimeout = setTimeout(() => reject(new Error('3D library load timed out')), 9000); })
+      ]);
+      model = createChloroplast(THREE);
+      sceneStatus.hidden = true;
+      byId('legend').hidden = false;
+      byId('view-tools').hidden = false;
+    } catch (error) {
+      showModelUnavailable();
+      console.warn('Unable to start the 3D chloroplast model.', error);
+    } finally {
+      clearTimeout(loadTimeout);
+    }
+
+    function createChloroplast(THREE) {
+      const vector = (x, y, z) => new THREE.Vector3(x, y, z);
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x12231c);
+      const camera = new THREE.PerspectiveCamera(34, 1, .1, 70);
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.2;
+      host.append(renderer.domElement);
+      host.dataset.ready = 'true';
+
+      scene.add(new THREE.HemisphereLight(0xe5ffe8, 0x364938, 1.9));
+      const key = new THREE.DirectionalLight(0xffefc4, 2.6);
+      key.position.set(-4, 7, 4);
+      scene.add(key);
+      const rim = new THREE.DirectionalLight(0xa8ffdc, 2.3);
+      rim.position.set(3, 3, -6);
+      scene.add(rim);
+      const grid = new THREE.GridHelper(24, 34, 0x304c3b, 0x263b30);
+      grid.position.y = -1.13;
+      grid.material.transparent = true;
+      grid.material.opacity = .7;
+      scene.add(grid);
+
+      const specimen = new THREE.Group();
+      scene.add(specimen);
+      const material = (color, options = {}) => new THREE.MeshStandardMaterial({ color, roughness: .52, ...options });
+      const sphere = new THREE.SphereGeometry(1, 24, 16);
+
+      function mesh(parent, geometry, surface, location, scale) {
+        const object = new THREE.Mesh(geometry, surface);
+        object.position.copy(location);
+        if (scale) object.scale.copy(scale);
+        parent.add(object);
+        return object;
+      }
+
+      const bowl = new THREE.SphereGeometry(1, 96, 36, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2);
+      mesh(specimen, bowl, material(0x427e58, { side: THREE.DoubleSide, roughness: .36 }), vector(0, 0, 0), vector(3.45, 1.05, 1.87));
+      mesh(specimen, bowl, material(0x83b97d, { side: THREE.DoubleSide }), vector(0, .035, 0), vector(3.30, .94, 1.73));
+      const rimGeometry = new THREE.TorusGeometry(1, .021, 10, 128);
+      const outerRim = mesh(specimen, rimGeometry, material(0xb1cf8f), vector(0, 0, 0), vector(3.43, 1.86, 1));
+      const innerRim = mesh(specimen, rimGeometry, material(0x609974), vector(0, .03, 0), vector(3.28, 1.72, 1));
+      outerRim.rotation.x = innerRim.rotation.x = Math.PI / 2;
+      mesh(specimen, sphere, material(0x80ab76, { roughness: .75 }), vector(0, -.27, 0), vector(3.18, .51, 1.62));
+
+      const stacks = [
+        { x: -2.23, z: -.12, r: .43, n: 4 }, { x: -1.34, z: -.75, r: .49, n: 5 },
+        { x: -1.13, z: .57, r: .47, n: 4 }, { x: -.13, z: -.48, r: .51, n: 6 },
+        { x: .78, z: .15, r: .57, n: 6 }, { x: 1.56, z: -.60, r: .43, n: 4 },
+        { x: 2.19, z: .20, r: .40, n: 4 }
+      ];
+      const discSurface = material(0x246b47, { roughness: .4 });
+      const discRim = material(0x70b566, { roughness: .42 });
+      const disk = new THREE.CylinderGeometry(1, 1, .084, 42);
+      const diskRim = new THREE.TorusGeometry(1, .026, 8, 42);
+      const lamella = material(0x3f875e);
+
+      for (const stack of stacks) {
+        for (let layer = 0; layer < stack.n; layer++) {
+          const location = vector(stack.x, .14 + layer * .125, stack.z);
+          mesh(specimen, disk, discSurface, location, vector(stack.r, 1, stack.r * .84));
+          const edge = mesh(specimen, diskRim, discRim, location, vector(stack.r, stack.r * .84, 1));
+          edge.rotation.x = Math.PI / 2;
+        }
+      }
+
+      for (const [from, to, y] of [[0, 1, .27], [0, 2, .35], [1, 3, .38], [2, 3, .27], [2, 4, .26], [3, 4, .51], [3, 5, .43], [4, 6, .40], [5, 6, .26]]) {
+        const a = stacks[from];
+        const b = stacks[to];
+        const span = Math.hypot(b.x - a.x, b.z - a.z);
+        const link = mesh(specimen, sphere, lamella, vector((a.x + b.x) / 2, y, (a.z + b.z) / 2), vector(span * .52, .046, .103));
+        link.rotation.y = -Math.atan2(b.z - a.z, b.x - a.x);
+      }
+
+      const granules = material(0xa3c98c);
+      for (let i = 0; i < 70; i++) {
+        const angle = i * 2.39996;
+        const radial = Math.sqrt((i + 1) / 71) * .96;
+        const size = .027 + (i % 5) * .007;
+        mesh(specimen, sphere, granules, vector(Math.cos(angle) * 3.16 * radial, .19 - radial * radial * .21, Math.sin(angle) * 1.58 * radial), vector(size, size * .66, size));
+      }
+
+      const lightGroup = new THREE.Group();
+      const heatGroup = new THREE.Group();
+      specimen.add(lightGroup, heatGroup);
+      const photonSurface = new THREE.MeshBasicMaterial({ color: 0xffdc73 });
+      const electronSurface = new THREE.MeshBasicMaterial({ color: 0xaffee6 });
+      const pigmentSurface = material(0x9d9f25, { emissive: 0x887410, emissiveIntensity: .42, roughness: .32 });
+      const acceptor = vector(1.26, .85, .31);
+      const chlorophyll = vector(.55, .86, .23);
+      const groundState = vector(.55, 1.01, .23);
+      const excitedState = vector(.55, 1.51, .23);
+      mesh(lightGroup, sphere, pigmentSurface, chlorophyll, vector(.21, .105, .19));
+      mesh(lightGroup, sphere, material(0x357d76, { emissive: 0x15584b }), acceptor, vector(.145, .086, .15));
+
+      const photon = new THREE.Group();
+      lightGroup.add(photon);
+      mesh(photon, sphere, photonSurface, vector(0, 0, 0), vector(.082, .082, .082));
+      for (let i = 1; i <= 9; i++) {
+        const point = vector(-i * .066, Math.sin(i * .9) * .078, 0);
+        const size = .035 - i * .0024;
+        mesh(photon, sphere, photonSurface, point, vector(size, size, size));
+      }
+      const electron = mesh(lightGroup, sphere, electronSurface, groundState, vector(.075, .075, .075));
+      const arrival = new THREE.QuadraticBezierCurve3(vector(-3.25, 2.42, .38), vector(-.9, 2.57, .19), chlorophyll.clone());
+      const transfer = new THREE.QuadraticBezierCurve3(excitedState, vector(1.10, 1.62, .24), acceptor.clone());
+      const path = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([groundState, ...transfer.getPoints(32)]),
+        new THREE.LineDashedMaterial({ color: 0xa9dbc3, dashSize: .035, gapSize: .046, transparent: true, opacity: .7 })
+      );
+      path.computeLineDistances();
+      lightGroup.add(path);
+
+      const enzymeAnchor = vector(-.07, .44, 1.05);
+      const enzymes = [];
+      const enzymeSurface = material(0xe4956c, { roughness: .41 });
+      const enzymeCore = material(0xaa6547);
+      for (const location of [enzymeAnchor, vector(1.47, .27, .72), vector(-1.91, .27, .66), vector(1.55, .29, -1.10)]) {
+        const enzyme = new THREE.Group();
+        enzyme.position.copy(location);
+        heatGroup.add(enzyme);
+        mesh(enzyme, sphere, enzymeCore, vector(0, 0, 0), vector(.30, .21, .25));
+        for (let i = 0; i < 8; i++) {
+          const angle = i * Math.PI / 4;
+          const center = vector(Math.cos(angle) * .22, i % 2 ? .085 : -.04, Math.sin(angle) * .18);
+          mesh(enzyme, sphere, enzymeSurface, center, vector(.17, .15, .16));
+        }
+        enzymes.push(enzyme);
+      }
+
+      const carbonDioxide = new THREE.Group();
+      heatGroup.add(carbonDioxide);
+      const co2Surface = material(0xa5ead2, { emissive: 0x45806b, emissiveIntensity: .3 });
+      const carbon = material(0x346c62);
+      for (const offset of [-.12, 0, .12]) {
+        mesh(carbonDioxide, sphere, offset === 0 ? carbon : co2Surface, vector(offset, 0, 0), vector(.076, .076, .076));
+      }
+      const capture = new THREE.QuadraticBezierCurve3(vector(-.80, 1.92, 1.19), vector(-.17, 1.62, 1.35), vector(-.09, .67, 1.14));
+
+      const focusLabel = byId('focus-label');
+      const structureLabel = byId('structure-label');
+      const directions = vector(0, 0, 0);
+      const motionVector = vector(0, 0, 0);
+      const projection = vector(0, 0, 0);
+      const stroma = vector(-1.42, .10, 1.11);
+      let width = 1;
+      let height = 1;
+      let pitch = 0;
+      let yaw = -.18;
+      const initialLightPhase = .45;
+      let elapsed = initialLightPhase;
+      let heatPhase = 0;
+      let lastFrame = 0;
+      let frame = 0;
+      let inView = true;
+      let drag;
+      let contextLost = false;
+
+      function drawLabel(label, location, left) {
+        projection.copy(location).applyMatrix4(specimen.matrixWorld).project(camera);
+        const x = (projection.x + 1) * width / 2;
+        const y = (1 - projection.y) * height / 2;
+        const lead = width < 640 ? 13 : 28;
+        const labelX = left ? x - lead - label.offsetWidth : x + lead;
+        label.style.left = `${clamp(labelX, 5, Math.max(5, width - label.offsetWidth - 5))}px`;
+        label.style.top = `${clamp(y - label.offsetHeight / 2, 65, height - 59)}px`;
+        label.style.setProperty('--leader', `${Math.min(lead, left ? Math.max(0, x - label.offsetWidth - 5) : Math.max(0, width - x - label.offsetWidth - 5))}px`);
+        label.classList.toggle('on-left', left);
+      }
+
+      function render() {
+        if (contextLost) return;
+        specimen.rotation.set(pitch, yaw, 0);
+        const heat = state.mode === 'heat';
+        lightGroup.visible = !heat;
+        heatGroup.visible = heat;
+
+        if (heat) {
+          const heatStress = clamp((state.heat - 41) / 14, 0, 1);
+          const binding = Math.min(1, heatPhase / .72);
+          const pulse = Math.sin(binding * Math.PI);
+          for (const [i, enzyme] of enzymes.entries()) {
+            enzyme.rotation.y = (heatPhase + i * .15) * Math.PI * 2;
+            enzyme.scale.set(1 + heatStress * .25, 1 - heatStress * .40 + pulse * .07, 1 - heatStress * .14);
+          }
+          carbonDioxide.visible = heatPhase < .87 && (state.heat < 50 || heatPhase < .60);
+          capture.getPoint(Math.min(binding, 1 - heatStress * .30), carbonDioxide.position);
+          carbonDioxide.rotation.z = -binding * 1.2;
+        } else {
+          const period = 2 + 260 / Math.max(1, state.light + 8);
+          const phase = elapsed % period;
+          const arrivalTime = 1.1;
+          const excitedTime = 1.54;
+          const transferTime = 2.19;
+          const duringArrival = state.light > 0 && phase < arrivalTime;
+          const duringExcitation = state.light > 0 && phase >= arrivalTime && phase < excitedTime;
+          const duringTransfer = state.light > 0 && phase >= excitedTime && phase < transferTime;
+          photon.visible = duringArrival;
+          const travel = Math.min(phase / arrivalTime, 1);
+          arrival.getPoint(travel, photon.position);
+          arrival.getTangent(travel, directions);
+          photon.quaternion.setFromUnitVectors(motionVector.set(1, 0, 0), directions);
+          electron.position.copy(groundState);
+          if (duringExcitation) electron.position.lerp(excitedState, Math.min((phase - arrivalTime) / .21, 1));
+          if (duringTransfer) transfer.getPoint((phase - excitedTime) / (transferTime - excitedTime), electron.position);
+          path.visible = state.light > 0;
+          pigmentSurface.emissiveIntensity = duringExcitation ? 1.15 : .42;
+        }
+
+        renderer.render(scene, camera);
+        focusLabel.hidden = false;
+        structureLabel.hidden = false;
+        drawLabel(focusLabel, heat ? enzymeAnchor : chlorophyll, false);
+        drawLabel(structureLabel, heat ? stroma : vector(-1.50, .63, -.40), true);
+      }
+
+      function resize() {
+        width = host.clientWidth;
+        height = host.clientHeight;
+        if (!width || !height) return;
+        camera.aspect = width / height;
+        const distance = Math.max(9.5, 13.6 / camera.aspect);
+        camera.position.set(0, distance * .51, distance * .87);
+        camera.lookAt(0, .39, 0);
+        camera.updateProjectionMatrix();
+        renderer.setSize(width, height, false);
+        render();
+      }
+
+      function tick(now) {
+        frame = 0;
+        const seconds = lastFrame ? Math.min((now - lastFrame) / 1000, .05) : 0;
+        lastFrame = now;
+        if (!state.paused && inView && !document.hidden && !contextLost) {
+          elapsed += seconds;
+          if (state.mode === 'heat') heatPhase = (heatPhase + seconds * (.07 + .67 * activityAt(state.heat))) % 1;
+          render();
+        }
+        schedule();
+      }
+
+      function schedule() {
+        if (frame || state.paused || !inView || document.hidden || contextLost) return;
+        frame = requestAnimationFrame(tick);
+      }
+
+      const canvas = renderer.domElement;
+      canvas.addEventListener('pointerdown', (event) => {
+        if (!event.isPrimary || event.button !== 0) return;
+        drag = { id: event.pointerId, x: event.clientX, y: event.clientY };
+        canvas.setPointerCapture(event.pointerId);
+      });
+      canvas.addEventListener('pointermove', (event) => {
+        if (drag?.id !== event.pointerId) return;
+        yaw += (event.clientX - drag.x) * .009;
+        pitch = clamp(pitch + (event.clientY - drag.y) * .006, -.27, .36);
+        drag = { id: event.pointerId, x: event.clientX, y: event.clientY };
+        render();
+      });
+      canvas.addEventListener('lostpointercapture', () => { drag = undefined; });
+      canvas.addEventListener('webglcontextlost', (event) => {
+        event.preventDefault();
+        contextLost = true;
+        showModelUnavailable();
+      });
+      canvas.addEventListener('webglcontextrestored', () => {
+        contextLost = false;
+        sceneStatus.hidden = true;
+        byId('view-tools').hidden = false;
+        byId('legend').hidden = false;
+        resize();
+        schedule();
+      });
+      new ResizeObserver(resize).observe(host);
+      new IntersectionObserver(([entry]) => {
+        inView = entry.isIntersecting;
+        lastFrame = 0;
+        schedule();
+      }).observe(stage);
+      document.addEventListener('visibilitychange', () => { lastFrame = 0; schedule(); });
+      resize();
+      schedule();
+
+      return {
+        render,
+        syncMotion() { lastFrame = 0; render(); schedule(); },
+        restart() { elapsed = initialLightPhase; heatPhase = 0; render(); },
+        rotate(delta) { yaw += delta; render(); },
+        resetView() { pitch = 0; yaw = -.18; render(); }
+      };
+    }
+  </script>
+</body>
+</html>
